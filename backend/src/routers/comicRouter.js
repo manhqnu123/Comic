@@ -1,0 +1,16 @@
+import { createComic, getComics, getDetailComic, updateComic, deleteComic, searchComics } from "../controllers/comicController.js";
+import express from "express";
+import { protect } from "../middleware/authMiddleware.js";
+import {isAdmin} from "../middleware/adminMiddleware.js";
+
+const router = express.Router();
+
+router.post("/", protect, isAdmin, createComic);
+router.put("/:id", protect, isAdmin, updateComic);
+router.delete("/:id", protect, isAdmin, deleteComic);
+
+router.get("/", getComics);
+router.get("/search", searchComics);
+router.get("/:slug", getDetailComic);
+
+export default router;

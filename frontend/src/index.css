@@ -1,0 +1,99 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "@fontsource-variable/inter";
+
+@custom-variant dark (&:is(.dark *));
+
+
+:root {
+  --background: 220 15% 10%;
+  --foreground: 210 40% 95%;
+  --card: 220 15% 14%;
+  --card-foreground: 210 40% 95%;
+  --primary: 0 80% 55%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 220 10% 20%;
+  --secondary-foreground: 210 40% 95%;
+  --muted: 220 10% 18%;
+  --muted-foreground: 210 20% 70%;
+  --accent: 0 80% 55%;
+  --accent-foreground: 0 0% 100%;
+  --border: 220 10% 25%;
+  --input: 220 10% 18%;
+  --ring: 0 80% 55%;
+  --radius: 0.5rem;
+  --gradient-primary: linear-gradient(
+    135deg,
+    hsl(0 80% 55%) 0%,
+    hsl(0 80% 45%) 100%
+  );
+}
+
+
+@theme {
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+}
+
+.dark {
+  --background: 220 15% 8%;
+  --foreground: 210 40% 95%;
+}
+
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    margin: 0;
+    font-family: "Inter Variable", sans-serif;
+  }
+}
+
+
+#root {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+
+.comic-card {
+  @apply bg-card p-3 rounded-lg shadow-md hover:scale-105 transition-transform;
+}
+
+
+.reading-container {
+  max-width: 800px;
+  margin: auto;
+}
+
+.chapter-img {
+  width: 100%;
+  display: block;
+}
+
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--primary));
+  border-radius: 10px;
+}
