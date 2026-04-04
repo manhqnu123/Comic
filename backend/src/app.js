@@ -13,16 +13,19 @@ import comicRouter from './routers/comicRouter.js';
 import chapterRouter from './routers/chapterRouter.js';
 import commentRouter from './routers/commentRouter.js';
 import followRouter from './routers/followRouter.js';
+import path from 'path';
 
-
+const __dirname = path.resolve();
 
 const app = express();
-app.use(
-  cors({
-    origin: "http://localhost:5173", // địa chỉ frontend
-    credentials: true, // nếu dùng cookie/token
-  }),
-);
+if (process.env.NODE_ENV !== 'production') {
+  app.use(
+    cors({
+      origin: "http://localhost:5173", // địa chỉ frontend
+      credentials: true, // nếu dùng cookie/token
+    }),
+  );
+}
 app.use(express.json());
 app.use(cookieParser());
 
@@ -34,6 +37,14 @@ app.use("/api/comics", comicRouter);
 app.use("/api/chapters", chapterRouter);
 app.use("/api/comments", commentRouter);
 app.use("/api/follow", followRouter);
+
+app.use(express.static(path.join(__dirname, "../frontend/dist")));
+
+if (process.env.NODE_ENV === "production") {
+  app.use((req, res) => {
+    res.sendFile(path.join(__dirname, "../frontend/dist/index.html"));
+  });
+}
 
 connectDB().then(() => {
     app.listen(3000, () => {
