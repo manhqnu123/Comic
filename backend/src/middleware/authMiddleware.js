@@ -1,6 +1,13 @@
 // middleware/authMiddleware.js
 import jwt from "jsonwebtoken";
 import User from "../model/User.js";
+import fs from "fs";
+import path from "path";
+
+const publicKey = fs.readFileSync(
+  path.join(process.cwd(), "key", "public_key.pem"),
+  "utf8",
+);
 
 export const protect = async (req, res, next) => {
   try {
@@ -19,7 +26,7 @@ export const protect = async (req, res, next) => {
     }
 
     // Verify token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, publicKey, { algorithms: ["RS256"] });
 
     // Lấy user từ database (không lấy password)
     const user = await User.findById(decoded.id).select("-password");

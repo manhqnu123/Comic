@@ -2,19 +2,36 @@ import User from "../model/User.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import Follow from "../model/Follow.js";
+import fs from "fs";
+import path from "path";
+
+const privateKey = fs.readFileSync(
+  path.join(process.cwd(), "key", "private_key.pem"),
+  "utf8",
+);
+const publicKey = fs.readFileSync(
+  path.join(process.cwd(), "key", "public_key.pem"),
+  "utf8",
+);
 
 // tạo token ──────────────────────────────────────
 const generateTokens = (user) => {
   const accessToken = jwt.sign(
     { id: user._id, role: user.role },
-    process.env.JWT_SECRET,
-    { expiresIn: "1d" },
+    privateKey,
+    {
+      algorithm: "RS256",
+      expiresIn: "1d",
+    },
   );
 
   const refreshToken = jwt.sign(
     { id: user._id },
-    process.env.JWT_REFRESH_SECRET,
-    { expiresIn: "7d" },
+    privateKey,
+    {
+      algorithm: "RS256",
+      expiresIn: "7d",
+    },
   );
 
   return { accessToken, refreshToken };
@@ -126,10 +143,9 @@ export const refreshToken = async (req, res) => {
     if (!token)
       return res.status(401).json({ message: "Không có refresh token" });
 
-    // Verify token trước
     let decoded;
     try {
-      decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
+      decoded = jwt.verify(token, publicKey, { algorithms: ["RS256"] });
     } catch (err) {
       return res
         .status(403)
@@ -139,7 +155,6 @@ export const refreshToken = async (req, res) => {
     // Tìm user theo id trước
     const user = await User.findById(decoded.id);
 
-    
     if (!user) {
       return res.status(403).json({ message: "User không tồn tại" });
     }

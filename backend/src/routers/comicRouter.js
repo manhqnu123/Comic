@@ -2,11 +2,12 @@ import { createComic, getComics, getDetailComic, updateComic, deleteComic, searc
 import express from "express";
 import { protect } from "../middleware/authMiddleware.js";
 import {isAdmin} from "../middleware/adminMiddleware.js";
+import {uploadCloud} from "../config/cloudinary.js";
 
 const router = express.Router();
 
-router.post("/", protect, isAdmin, createComic);
-router.put("/:id", protect, isAdmin, updateComic);
+router.post("/", protect,isAdmin, uploadCloud.single("image"), createComic);
+router.put("/:id", protect, isAdmin, uploadCloud.single("image"), updateComic);
 router.delete("/:id", protect, isAdmin, deleteComic);
 
 router.get("/", getComics);

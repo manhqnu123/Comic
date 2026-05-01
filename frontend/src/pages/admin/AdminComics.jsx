@@ -15,10 +15,12 @@ export default function AdminComics() {
   const [comics, setComics] = useState([]);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
-  const [editId, setEditId] = useState(null); // null = đang tạo mới
+  const [editId, setEditId] = useState(null);
+  const [preview, setPreview] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [genres, setGenres] = useState([]);
   const [selectedGenres, setSelectedGenres] = useState([]);
+  const [file, setFile] = useState(null);
   const [error, setError] = useState("");
 
   const getHeaders = () => ({
@@ -67,21 +69,50 @@ export default function AdminComics() {
       return;
     }
 
-    const payload = {
-      ...form,
-      genres: selectedGenres,
-    };
+    // 1. Khởi tạo FormData
+    const formData = new FormData();
+    formData.append("title", form.title);
+    formData.append("des", form.des);
+    formData.append("author", form.author);
+    formData.append("status", form.status);
+
+    // Gửi mảng thể loại
+    selectedGenres.forEach((id) => {
+      formData.append("genres", id);
+    });
+
+    if (file) {
+      // Tên key "image" phải khớp với uploadCloud.single("image") ở Backend
+      formData.append("image", file);
+    }
+
+    // const payload = {
+    //   ...form,
+    //   genres: selectedGenres,
+    // };
 
     try {
       setLoading(true);
+      const config = {
+        headers: {
+          ...getHeaders(),
+          "Content-Type": "multipart/form-data",  
+        },
+      };
+
       if (editId) {
-        await api.put(`/comics/${editId}`, payload, { headers: getHeaders() });
+        await api.put(`/comics/${editId}`, formData, config);
       } else {
-        await api.post("/comics", payload, { headers: getHeaders() });
+        if (!file) {
+          setError("Vui lòng chọn ảnh bìa.");
+          setLoading(false);
+          return;
+        }
+        await api.post("/comics", formData, config);
       }
-      setShowForm(false);
-      setForm(EMPTY_FORM);
-      setEditId(null);
+
+      // Reset form sau khi thành công
+      handleCancel();
       fetchComics();
     } catch (err) {
       setError(err.response?.data?.message || "Lỗi hệ thống.");
@@ -90,20 +121,20 @@ export default function AdminComics() {
     }
   };
 
-  const handleEdit = (comic) => {
-    setEditId(comic._id);
-    setSelectedGenres(comic.genres?.map((g) => g._id) || []);
-    setForm({
-      title: comic.title,
-      des: comic.des,
-      author: comic.author,
-      coverImg: comic.coverImg,
-      status: comic.status,
-      // genres: comic.genres?.map((g) => g._id).join(", ") || "",
-    });
-    setShowForm(true);
-    setError("");
-  };
+ const handleEdit = (comic) => {
+   setEditId(comic._id);
+   setSelectedGenres(comic.genres?.map((g) => g._id) || []);
+   setForm({
+     title: comic.title,
+     des: comic.des,
+     author: comic.author,
+     coverImg: comic.coverImg,
+     status: comic.status,
+   });
+   setPreview(comic.coverImg); // Hiển thị ảnh cũ để xem trước
+   setShowForm(true);
+   setError("");
+ };
 
   const handleDelete = async (id) => {
     if (!window.confirm("Xóa truyện này sẽ xóa toàn bộ chapter. Xác nhận?"))
@@ -121,6 +152,8 @@ export default function AdminComics() {
     setForm(EMPTY_FORM);
     setEditId(null);
     setSelectedGenres([]);
+    setFile(null); // Reset file
+    setPreview(""); // Reset ảnh preview
     setError("");
   };
 
@@ -192,17 +225,39 @@ export default function AdminComics() {
               </select>
             </div>
 
-            <div className="col-span-2 flex flex-col gap-1">
+            <div className="col-span-2 flex flex-col gap-2">
               <label className="text-xs text-muted-foreground">
-                URL ảnh bìa
+                Ảnh bìa truyện *
               </label>
-              <input
-                name="coverImg"
-                value={form.coverImg}
-                onChange={handleChange}
-                className="bg-input border border-border rounded-md px-3 py-2 text-sm outline-none focus:border-primary"
-                placeholder="https://..."
-              />
+              <div className="flex items-center gap-4">
+                {/* 1. Khu vực hiển thị ảnh xem trước */}
+                <div className="w-20 h-28 bg-secondary rounded border border-border overflow-hidden flex items-center justify-center">
+                  {preview ? (
+                    <img
+                      src={preview}
+                      alt="Preview"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-[10px] text-muted-foreground">
+                      No Image
+                    </span>
+                  )}
+                </div>
+
+                {/* 2. Nút chọn file */}
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const selectedFile = e.target.files[0];
+                    if (selectedFile) {
+                      setFile(selectedFile); // Lưu file để gửi đi
+                      setPreview(URL.createObjectURL(selectedFile)); // Tạo link để hiển thị
+                    }
+                  }}
+                />
+              </div>
             </div>
 
             <div className="col-span-2 flex flex-col gap-1">
