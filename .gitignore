@@ -1,4 +1,4 @@
 .env
 node_modules/
 key/
-src/config/seed.js
+backend/src/config/seed.js
