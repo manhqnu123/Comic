@@ -21,15 +21,12 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
-  // Khi app load → thử refresh để khôi phục session từ cookie
+  //chạy khi app load để restore session nếu có refresh token hợp lệ
   useEffect(() => {
     const restoreSession = async () => {
       try {
         const res = await api.post("/auth/refresh-token");
         setToken(res.data.accessToken);
-
-        const userRes = await api.get("/auth/me");
-        setUser(userRes.data);
       } catch {
         setUser(null);
         setToken(null);
@@ -40,7 +37,7 @@ export function AuthProvider({ children }) {
     restoreSession();
   }, [setToken]);
 
-  // Login — trả về user để LoginPage biết role mà redirect
+  // Login — lưu token + user
   const login = useCallback(async (email, password) => {
     const res = await api.post("/auth/login", { email, password });
     setToken(res.data.accessToken);
@@ -69,6 +66,5 @@ export function AuthProvider({ children }) {
 
 export function useAuth() {
   const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error("useAuth phải dùng bên trong <AuthProvider>");
   return ctx;
 }

@@ -43,7 +43,7 @@ export default function Login() {
       const user = await login(form.email.trim().toLowerCase(), form.password);
 
       // Redirect theo role
-      navigate(user.role === "admin" ? "/admin" : "/");
+      navigate(user.role.name === "admin" ? "/admin" : "/");
     } catch (err) {
       const message =
         err.response?.data?.message || "Lỗi hệ thống, vui lòng thử lại.";

@@ -2,8 +2,10 @@ import User from "../model/User.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import Follow from "../model/Follow.js";
+import Role from "../model/Role.js";
 import fs from "fs";
 import path from "path";
+import Token from "../model/Token.js";
 
 const privateKey = fs.readFileSync(
   path.join(process.cwd(), "key", "private_key.pem"),
@@ -66,8 +68,18 @@ export const register = async (req, res) => {
     if (existingUser)
       return res.status(400).json({ message: "Email đã tồn tại" });
 
+    const userRole = await Role.findOne({ name: "user" });
+
+    if (!userRole) {
+      return res
+        .status(500)
+        .json({
+          message: "Vai trò người dùng chưa được thiết lập trong hệ thống",
+        });
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
-    await User.create({ username, email, password: hashedPassword });
+    await User.create({ username, email, password: hashedPassword, role: userRole._id });
 
     res.status(201).json({ message: "Đăng ký thành công" });
   } catch (error) {
@@ -86,7 +98,7 @@ export const login = async (req, res) => {
         .status(400)
         .json({ message: "Vui lòng điền đầy đủ thông tin" });
 
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email }).populate("role");
     if (!user)
       return res
         .status(400)
@@ -100,38 +112,36 @@ export const login = async (req, res) => {
 
     const { accessToken, refreshToken } = generateTokens(user);
 
+    // Xóa token cũ của user trước
+    await Token.deleteMany({ user: user._id });
+
     // Lưu refresh token vào DB
-    user.refreshToken = refreshToken;
-    await user.save();
+    await Token.insertMany([
+      {
+        user: user._id,
+        token: accessToken,
+        type: "access",
+        expiresAt: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000),
+      },
+      {
+        user: user._id,
+        token: refreshToken,
+        type: "refresh",
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), 
+      },
+    ]);
     // Gửi refresh token qua cookie
     setRefreshCookie(res, refreshToken);
 
     const follows = await Follow.find({ user: user._id }).select("comic");
     const followedComics = follows.map((f) => f.comic.toString());
 
-    // Trả access token + thông tin user (không có password)
+    // Trả access token + thông tin user
     const { password: _, refreshToken: __, ...userInfo } = user.toObject();
     res.json({ accessToken, user: userInfo, followedComics });
   } catch (error) {
     console.error("Login error:", error);
     res.status(500).json({ message: "Lỗi hệ thống" });
-  }
-};
-
-export const getMe = async (req, res) => {
-  try {
-    const user = await User.findById(req.user.id).select("-password");
-
-    const follows = await Follow.find({ user: user._id }).select("comic");
-
-    const followedComics = follows.map((f) => f.comic.toString());
-
-    res.json({
-      ...user.toObject(),
-      followedComics,
-    });
-  } catch (err) {
-    res.status(500).json({ message: "Lỗi getMe" });
   }
 };
 
@@ -153,7 +163,7 @@ export const refreshToken = async (req, res) => {
     }
 
     // Tìm user theo id trước
-    const user = await User.findById(decoded.id);
+    const user = await User.findById(decoded.id).populate("role");
 
     if (!user) {
       return res.status(403).json({ message: "User không tồn tại" });
@@ -180,11 +190,12 @@ export const logout = async (req, res) => {
     const token = req.cookies.refreshToken;
 
     if (token) {
-      // Xóa refresh token khỏi DB
-      await User.findOneAndUpdate(
-        { refreshToken: token },
-        { refreshToken: null },
-      );
+      // Tìm refreshToken trong DB để lấy userId
+      const tokenDoc = await Token.findOne({ token, type: "refresh" });
+      if (tokenDoc) {
+        // Xóa tất cả token của user đó
+        await Token.deleteMany({ user: tokenDoc.user });
+      }
     }
 
     // Xóa cookie

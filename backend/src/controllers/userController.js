@@ -1,4 +1,5 @@
 import User from "../model/User.js";
+import Role from "../model/Role.js";
 import bcrypt from "bcryptjs";
 
 export const getUserById = async (req, res) => {
@@ -16,15 +17,16 @@ export const getListUsers = async (req, res) => {
     const page = Math.max(1, parseInt(req.query.page) || 1);
     const limit = Math.min(50, parseInt(req.query.limit) || 10);
     const skip = (page - 1) * limit;
+    const userRole = await Role.findOne({ name: "user" });
 
     const [users, total] = await Promise.all([
-      User.find({ role: "user" })
+      User.find({ role: userRole._id })
         .select("-password -__v")
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
         .lean(),
-      User.countDocuments({ role: "user" }),
+      User.countDocuments({ role: userRole._id }),
     ]);
 
     res.json({

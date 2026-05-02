@@ -18,7 +18,7 @@ export default function AdminUser() {
     setError("");
     try {
       const res = await api.get(`/users?page=${currentPage}&limit=${limit}`, { headers: getHeaders() });
-      const data = res.data.data || res.data.users || res.data || [];
+      const data = res.data.data || res.data.users  || res.data || [];
       setUsers(data);
       if (res.data.pagination) setPagination(res.data.pagination);
     } catch {

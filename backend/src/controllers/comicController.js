@@ -40,7 +40,8 @@ export const getComics = async (req, res) => {
     const comics = await Comic.find()
       .populate("genres")
       .skip((page - 1) * limit)
-      .limit(limit);
+      .limit(limit)
+      .lean();
 
     res.json(comics);
   } catch (err) {

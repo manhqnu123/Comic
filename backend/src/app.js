@@ -14,6 +14,7 @@ import chapterRouter from "./routers/chapterRouter.js";
 import commentRouter from "./routers/commentRouter.js";
 import followRouter from "./routers/followRouter.js";
 import path from "path";
+import './model/index.js';
 
 const __dirname = path.resolve();
 
