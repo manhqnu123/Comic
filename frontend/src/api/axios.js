@@ -16,6 +16,17 @@ const processQueue = (error, token = null) => {
   failedQueue.forEach((p) => (error ? p.reject(error) : p.resolve(token)));
   failedQueue = [];
 };
+// Tự động đính kèm token vào Header trước khi gửi request
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
 
 api.interceptors.response.use(
   (res) => res,
@@ -62,6 +73,8 @@ api.interceptors.response.use(
 
     return Promise.reject(error);
   },
+  
+  
 );
 
 export default api;

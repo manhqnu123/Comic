@@ -69,7 +69,7 @@ export default function AdminComics() {
       return;
     }
 
-    // 1. Khởi tạo FormData
+    //Khởi tạo FormData
     const formData = new FormData();
     formData.append("title", form.title);
     formData.append("des", form.des);
@@ -82,33 +82,20 @@ export default function AdminComics() {
     });
 
     if (file) {
-      // Tên key "image" phải khớp với uploadCloud.single("image") ở Backend
-      formData.append("image", file);
+      formData.append("coverImg", file);
     }
-
-    // const payload = {
-    //   ...form,
-    //   genres: selectedGenres,
-    // };
 
     try {
       setLoading(true);
-      const config = {
-        headers: {
-          ...getHeaders(),
-          "Content-Type": "multipart/form-data",  
-        },
-      };
-
       if (editId) {
-        await api.put(`/comics/${editId}`, formData, config);
+        await api.put(`/comics/${editId}`, formData);
       } else {
         if (!file) {
           setError("Vui lòng chọn ảnh bìa.");
           setLoading(false);
           return;
         }
-        await api.post("/comics", formData, config);
+        await api.post("/comics", formData);
       }
 
       // Reset form sau khi thành công

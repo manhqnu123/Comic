@@ -11,7 +11,7 @@ export const createComic = async (req, res) => {
       lower: true,
       strict: true,
     });
-
+    console.log("coverImg:", coverImg);
     const comic = await Comic.create({
       title,
       slug,

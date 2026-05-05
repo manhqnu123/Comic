@@ -42,8 +42,10 @@ export default function Login() {
       // login() từ AuthContext xử lý token + lưu user, trả về user
       const user = await login(form.email.trim().toLowerCase(), form.password);
 
+      localStorage.setItem("token", user.accessToken);
+
       // Redirect theo role
-      navigate(user.role.name === "admin" ? "/admin" : "/");
+      navigate(user.user.role.name === "admin" ? "/admin" : "/");
     } catch (err) {
       const message =
         err.response?.data?.message || "Lỗi hệ thống, vui lòng thử lại.";

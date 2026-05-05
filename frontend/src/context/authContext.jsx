@@ -42,7 +42,7 @@ export function AuthProvider({ children }) {
     const res = await api.post("/auth/login", { email, password });
     setToken(res.data.accessToken);
     setUser(res.data.user); // backend trả về đầy đủ user object
-    return res.data.user;
+    return res.data;
   }, []);
 
   // Logout — xóa cookie phía server

@@ -6,9 +6,9 @@ import {uploadCloud} from "../config/cloudinary.js";
 
 const router = express.Router();
 
-router.post("/", protect, checkPermission("UPLOAD_COMIC"), uploadCloud.single("image"), createComic);
-router.put("/:id", protect, uploadCloud.single("image"), updateComic);
-router.delete("/:id", protect, deleteComic);
+router.post("/", protect, checkPermission("UPLOAD_COMIC"), uploadCloud.single("coverImg"), createComic);
+router.put("/:id", protect, checkPermission("UPDATE_COMIC"), uploadCloud.single("coverImg"), updateComic);
+router.delete("/:id", protect, checkPermission("DELETE_COMIC"), deleteComic);
 
 router.get("/", getComics);
 router.get("/search", searchComics);

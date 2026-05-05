@@ -157,30 +157,48 @@ export const refreshToken = async (req, res) => {
     try {
       decoded = jwt.verify(token, publicKey, { algorithms: ["RS256"] });
     } catch (err) {
+      return res.status(403).json({ message: "Refresh token không hợp lệ" });
+    }
+
+    // Kiểm tra xem refresh token này còn tồn tại trong DB không
+    const storedToken = await Token.findOne({
+      token,
+      user: decoded.id,
+      type: "refresh",
+    });
+    if (!storedToken) {
       return res
         .status(403)
-        .json({ message: "Refresh token hết hạn hoặc không hợp lệ" });
+        .json({ message: "Token đã bị thu hồi hoặc không tồn tại" });
     }
 
-    // Tìm user theo id trước
     const user = await User.findById(decoded.id).populate("role");
-
-    if (!user) {
-      return res.status(403).json({ message: "User không tồn tại" });
-    }
+    if (!user) return res.status(403).json({ message: "User không tồn tại" });
 
     const { accessToken, refreshToken: newRefreshToken } = generateTokens(user);
 
-    user.refreshToken = newRefreshToken;
-    await user.save();
+    // QUAN TRỌNG: Cập nhật lại bảng Token
+    await Token.deleteMany({ user: user._id }); // Xóa các token cũ của user này
+    await Token.insertMany([
+      {
+        user: user._id,
+        token: accessToken,
+        type: "access",
+        expiresAt: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000),
+      },
+      {
+        user: user._id,
+        token: newRefreshToken,
+        type: "refresh",
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      },
+    ]);
 
     setRefreshCookie(res, newRefreshToken);
     res.json({ accessToken });
   } catch (error) {
     console.error("Refresh error:", error);
-    res
-      .status(403)
-      .json({ message: "Refresh token hết hạn hoặc không hợp lệ" });
+    res.status(403).json({ message: "Lỗi khi làm mới token" });
   }
 };
 

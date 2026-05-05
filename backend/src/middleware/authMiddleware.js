@@ -1,6 +1,7 @@
 // middleware/authMiddleware.js
 import jwt from "jsonwebtoken";
 import User from "../model/User.js";
+import Token from "../model/Token.js";
 import fs from "fs";
 import path from "path";
 
@@ -28,12 +29,20 @@ export const protect = async (req, res, next) => {
     // Verify token
     const decoded = jwt.verify(token, publicKey, { algorithms: ["RS256"] });
 
+    const tokenExists = await Token.findOne({
+      token,
+      user: decoded.id,
+      type: "access",
+    });
+
+    if (!tokenExists) {
+      return res
+        .status(401)
+        .json({ message: "Token Revoked or Invalid" });
+    }
+
     // Lấy user từ database (không lấy password)
     const user = await User.findById(decoded.id).select("-password").populate("role");
-
-    if (!user) {
-      return res.status(401).json({ message: "User not found" });
-    }
 
     // Gán user vào request
     req.user = user;
