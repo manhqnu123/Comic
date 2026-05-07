@@ -4,7 +4,7 @@ const BASE_URL = import.meta.env.MODE === "development" ? "http://localhost:3000
 
 const api = axios.create({
   baseURL: BASE_URL,
-  headers: { "Content-Type": "application/json" },
+  // headers: { "Content-Type": "application/json" },
   withCredentials: true, // BẮT BUỘC để gửi cookie refreshToken
 });
 
@@ -23,6 +23,13 @@ api.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+
+    if (config.data instanceof FormData) {
+      delete config.headers["Content-Type"];
+    } else {
+      config.headers["Content-Type"] = "application/json";
+    }
+
     return config;
   },
   (error) => Promise.reject(error)
