@@ -6,6 +6,7 @@ import {
   useCallback,
 } from "react";
 import api from "../api/axios";
+import { jwtDecode } from "jwt-decode";
 
 const AuthContext = createContext(null);
 
@@ -26,8 +27,12 @@ export function AuthProvider({ children }) {
     const restoreSession = async () => {
       try {
         const res = await api.post("/auth/refresh-token");
-        setToken(res.data.accessToken);
+        const newToken = res.data.accessToken;
+        localStorage.setItem("token", newToken);
+        setToken(newToken);
+        setUser(jwtDecode(newToken));
       } catch {
+        localStorage.removeItem("token"); // xóa token nếu refresh không thành công
         setUser(null);
         setToken(null);
       } finally {
@@ -40,6 +45,7 @@ export function AuthProvider({ children }) {
   // Login — lưu token + user
   const login = useCallback(async (email, password) => {
     const res = await api.post("/auth/login", { email, password });
+    localStorage.setItem("token", res.data.accessToken);
     setToken(res.data.accessToken);
     setUser(res.data.user); // backend trả về đầy đủ user object
     return res.data;
@@ -52,6 +58,7 @@ export function AuthProvider({ children }) {
     } catch {
       // ignore
     } finally {
+      localStorage.removeItem("token");
       setUser(null);
       setToken(null);
     }

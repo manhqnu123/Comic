@@ -15,6 +15,7 @@ import commentRouter from "./routers/commentRouter.js";
 import followRouter from "./routers/followRouter.js";
 import path from "path";
 import './model/index.js';
+import { initPermissionsCache } from "./config/permissionCache.js";
 
 const __dirname = path.resolve();
 
@@ -52,3 +53,5 @@ connectDB().then(() => {
     console.log("ứng dụng đang chạy trên cổng 3000");
   });
 });
+
+initPermissionsCache();
