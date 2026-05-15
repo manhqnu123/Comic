@@ -13,12 +13,7 @@ export const checkPermission = (required) => {
 
             //cache không có thì truy vấn DB
             if (!permissions) {
-                const role = await Role.findById(RoleId).populate("permissions");
-                if (!role) {return res.status(403).json({ message: "Role không tồn tại" });}
-                permissions = role.permissions.map(p => p.name);
-
-                //lưu vào cache
-                cache.set(cacheKey, permissions);
+                if (!role) {return res.status(403).json({ message: "Role không tồn tại" });};
             }
 
             //kiểm tra quyền 
