@@ -45,7 +45,10 @@ export default function Login() {
       localStorage.setItem("token", user.accessToken);
 
       // Redirect theo role
-      navigate(user.user.role.name === "admin" ? "/admin" : "/");
+      const roleName = user.user.role.name;
+      if (roleName === "admin_root") navigate("/admin-root");
+      else if (roleName === "admin") navigate("/admin");
+      else navigate("/");
     } catch (err) {
       const message =
         err.response?.data?.message || "Lỗi hệ thống, vui lòng thử lại.";

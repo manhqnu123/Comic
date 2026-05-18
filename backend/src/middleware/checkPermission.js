@@ -1,29 +1,33 @@
-import Role from "../model/Role.js";
-import './authMiddleware.js';
-import cache from '../config/cache.js';
+import { invalidatePermissionsCache } from "../config/permissionCache.js";
+import cache from "../config/cache.js";
 
 export const checkPermission = (required) => {
-    return async (req, res, next) => {
-        try {
-            const RoleId = req.user.role;
-            const cacheKey = `permissions:${RoleId}`;
+  return async (req, res, next) => {
+    try {
+      // ── Root có tất cả quyền ──────────────────────
+      if (req.user.isRoot) return next();
 
-            //Thử lấy cache trước
-            let permissions = await cache.get(cacheKey);
+      const roleId = req.user.role._id ?? req.user.role;
+      const cacheKey = `permissions:${roleId}`;
 
-            //cache không có thì truy vấn DB
-            if (!permissions) {
-                if (!role) {return res.status(403).json({ message: "Role không tồn tại" });};
-            }
+      let permissions = cache.get(cacheKey);
 
-            //kiểm tra quyền 
-            if (!permissions.includes(required)) {
-                return res.status(403).json({ message: "Bạn không có quyền truy cập" });
-            }
-            next();
-        } catch (err) {
-            console.error("Lỗi ở checkPermission:", err);
-            res.status(500).json({ message: "Lỗi kiểm tra quyền", error: err.message });
-        }
+      // Cache không có thì load lại từ DB
+      if (!permissions) {
+        await invalidatePermissionsCache(roleId);
+        permissions = cache.get(cacheKey);
+      }
+
+      if (!permissions || !permissions.includes(required)) {
+        return res.status(403).json({ message: "Bạn không có quyền truy cập" });
+      }
+
+      next();
+    } catch (err) {
+      console.error("Lỗi ở checkPermission:", err);
+      res
+        .status(500)
+        .json({ message: "Lỗi kiểm tra quyền", error: err.message });
     }
-}
+  };
+};

@@ -16,6 +16,8 @@ import followRouter from "./routers/followRouter.js";
 import path from "path";
 import './model/index.js';
 import { initPermissionsCache } from "./config/permissionCache.js";
+import permissionsRouter from "./routers/permissionsRouter.js";
+import roleRouter from "./routers/roleRouter.js";
 
 const __dirname = path.resolve();
 
@@ -39,7 +41,8 @@ app.use("/api/comics", comicRouter);
 app.use("/api/chapters", chapterRouter);
 app.use("/api/comments", commentRouter);
 app.use("/api/follow", followRouter);
-
+app.use("/api/permissions", permissionsRouter);
+app.use("/api/roles", roleRouter);
 app.use(express.static(path.join(__dirname, "../frontend/dist")));
 
 if (process.env.NODE_ENV === "production") {

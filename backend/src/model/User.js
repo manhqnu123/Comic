@@ -29,6 +29,10 @@ const userSchema = new mongoose.Schema(
       ref: 'Role',
       required: true,
     },
+    isRoot: {
+      type: Boolean,
+      default: false,
+    }
   },
   { timestamps: true },
 );

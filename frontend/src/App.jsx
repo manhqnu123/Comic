@@ -11,6 +11,9 @@ import AdminUser from "./pages/admin/AdminUser";
 import DetailComic from "./pages/DetailComic";
 import ChapterPage from "./pages/ChapterPage";
 import ProfilePage from "./pages/ProfilePage";
+import AdminRootLayout from "./pages/admin-root/AdminRootLayout";
+import AdminRootPermissions from "./pages/admin-root/AdminRootPermissions";
+import AdminRootRole from "./pages/admin-root/AdminRootRole";
 
 
 function App() {
@@ -27,6 +30,14 @@ function App() {
           <Route path="comics" element={<AdminComicsPage />} />
           <Route path="chapters" element={<AdminChaptersPage />} />
           <Route path="users" element={<AdminUser />} />
+        </Route>
+        <Route path="/admin-root" element={<AdminRootLayout />}>
+          <Route
+            index
+            element={<Navigate to="/admin-root/permissions" replace />}
+          />
+          <Route path="permissions" element={<AdminRootPermissions />} />
+          <Route path="roles" element={<AdminRootRole />} />
         </Route>
         <Route path="/truyen/:slug" element={<DetailComic />} />
         <Route path="/chapter/:id" element={<ChapterPage />} />
