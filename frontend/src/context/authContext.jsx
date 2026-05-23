@@ -7,12 +7,14 @@ import {
 } from "react";
 import api from "../api/axios";
 import { jwtDecode } from "jwt-decode";
+import { connectSocket, disconnectSocket } from "../utils/socket";
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [notifications, setNotifications] = useState([]);
 
   const setToken = useCallback((token) => {
     if (token) {
@@ -22,6 +24,14 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
+  // Kết nối socket và lắng nghe thông báo
+ const setupSocket = useCallback((userId) => {
+   const socket = connectSocket(userId);
+   socket.on("new_notification", (notif) => {
+     setNotifications((prev) => [notif, ...prev]);
+   });
+ }, []);
+
   //chạy khi app load để restore session nếu có refresh token hợp lệ
   useEffect(() => {
     const restoreSession = async () => {
@@ -30,7 +40,9 @@ export function AuthProvider({ children }) {
         const newToken = res.data.accessToken;
         localStorage.setItem("token", newToken);
         setToken(newToken);
-        setUser(jwtDecode(newToken));
+        const decoded = jwtDecode(newToken);
+        setUser(decoded);
+        setupSocket(decoded.id);
       } catch {
         localStorage.removeItem("token"); // xóa token nếu refresh không thành công
         setUser(null);
@@ -40,7 +52,7 @@ export function AuthProvider({ children }) {
       }
     };
     restoreSession();
-  }, [setToken]);
+  }, [setToken, setupSocket]);
 
   // Login — lưu token + user
   const login = useCallback(async (email, password) => {
@@ -48,16 +60,18 @@ export function AuthProvider({ children }) {
     localStorage.setItem("token", res.data.accessToken);
     setToken(res.data.accessToken);
     setUser(res.data.user); // backend trả về đầy đủ user object
+    setupSocket(res.data.user._id);
     return res.data;
-  }, []);
+  }, [setupSocket]);
 
   // Logout — xóa cookie phía server
   const logout = useCallback(async () => {
     try {
       await api.post("/auth/logout");
     } catch {
-      // ignore
+      // Có lỗi cũng vẫn logout phía client
     } finally {
+      disconnectSocket();
       localStorage.removeItem("token");
       setUser(null);
       setToken(null);
@@ -65,7 +79,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, setUser }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, setUser, notifications, setNotifications }}>
       {!loading && children}
     </AuthContext.Provider>
   );

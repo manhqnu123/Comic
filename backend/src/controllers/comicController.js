@@ -1,5 +1,9 @@
 import Comic from "../model/Comic.js";
+import NewComic from "../model/NewComics.js";
+import Notifycation from "../model/Notifycations.js";
 import slugify from "slugify";
+import User from "../model/User.js";
+import { getIO } from "../config/socketIO.js";
 
 export const createComic = async (req, res) => {
   try {
@@ -11,7 +15,6 @@ export const createComic = async (req, res) => {
       lower: true,
       strict: true,
     });
-    console.log("coverImg:", coverImg);
     const comic = await Comic.create({
       title,
       slug,
@@ -22,6 +25,34 @@ export const createComic = async (req, res) => {
       status,
     });
 
+    const newComic = await NewComic.create({
+      title: comic.title,
+      description: comic.des,
+      thumbnail: comic.coverImg,
+      author: comic.author,
+    });
+    // Tạo thông báo
+    const notify = await Notifycation.create({
+      newComic: newComic._id,
+      title: `Truyện mới: ${comic.title}`,
+      message: `"${comic.title}" vừa được thêm vào hệ thống!`,
+      expiresAt: newComic.expiresAt,
+    });
+
+    const onlineUsers = await User.find({ isOnline: true }).select("_id");
+    console.log("Online users:", onlineUsers);
+
+    const io = getIO();
+    for (const user of onlineUsers) {
+      io.to(`user:${user._id}`).emit("new_notification", {
+        id: notify._id,
+        title: notify.title,
+        message: notify.message,
+        newComic: newComic,
+      });
+      notify.receivedBy.push(user._id);
+    }
+    await notify.save();
     res.status(201).json(comic);
   } catch (error) {
     res.status(500).json({
@@ -29,7 +60,7 @@ export const createComic = async (req, res) => {
       error: error.message,
     });
   }
-}; 
+};
 
 //phân trang
 export const getComics = async (req, res) => {

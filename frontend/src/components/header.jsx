@@ -8,9 +8,7 @@ import {
   BookOpen,
   LogOut,
   User,
-  Bookmark,
-  History,
-  Settings,
+  Bell,
   Shield,
 } from "lucide-react";
 import api from "@/api/axios";
@@ -23,16 +21,18 @@ const NAV_LINKS = [
 ];
 
 export default function Header() {
-  const { user, logout } = useAuth();
+  const { user, logout, notifications, setNotifications } = useAuth();
   const navigate = useNavigate();
 
   const [genres, setGenres] = useState([]);
   const [genreOpen, setGenreOpen] = useState(false);
   const [userDropOpen, setUserDropOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
 
   const genreRef = useRef(null);
   const userRef = useRef(null);
+  const notifRef = useRef(null);
 
   // Fetch genres
   useEffect(() => {
@@ -49,6 +49,8 @@ export default function Header() {
         setGenreOpen(false);
       if (userRef.current && !userRef.current.contains(e.target))
         setUserDropOpen(false);
+      if (notifRef.current && !notifRef.current.contains(e.target))
+        setNotifOpen(false);
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
@@ -58,6 +60,16 @@ export default function Header() {
     setUserDropOpen(false);
     await logout();
     navigate("/");
+  };
+
+  // Đánh dấu tất cả đã đọc khi mở dropdown
+  const handleOpenNotif = () => {
+    setNotifOpen((v) => !v);
+  };
+
+  const handleClearNotif = () => {
+    setNotifications([]);
+    setNotifOpen(false);
   };
 
   return (
@@ -136,7 +148,77 @@ export default function Header() {
         />
 
         {/* USER AREA desktop */}
-        <div className="hidden md:block shrink-0">
+        <div className="hidden md:flex items-center gap-2 shrink-0">
+          {/* CHUÔNG THÔNG BÁO */}
+          {user && (
+            <div className="relative" ref={notifRef}>
+              <button
+                onClick={handleOpenNotif}
+                className="relative p-2 text-muted-foreground hover:text-foreground hover:bg-secondary rounded-md transition-colors"
+              >
+                <Bell size={18} />
+                {notifications.length > 0 && (
+                  <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                    {notifications.length > 9 ? "9+" : notifications.length}
+                  </span>
+                )}
+              </button>
+
+              {notifOpen && (
+                <div className="absolute top-full right-0 mt-2 w-80 bg-card border border-border rounded-lg shadow-xl z-50 overflow-hidden">
+                  {/* Header dropdown */}
+                  <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+                    <span className="text-sm font-semibold">Thông báo</span>
+                    {notifications.length > 0 && (
+                      <button
+                        onClick={handleClearNotif}
+                        className="text-xs text-primary hover:underline"
+                      >
+                        Xóa tất cả
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Danh sách thông báo */}
+                  <div className="max-h-72 overflow-y-auto">
+                    {notifications.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center py-8 gap-2">
+                        <Bell
+                          size={28}
+                          className="text-muted-foreground opacity-40"
+                        />
+                        <p className="text-sm text-muted-foreground">
+                          Không có thông báo nào
+                        </p>
+                      </div>
+                    ) : (
+                      notifications.map((notif) => (
+                        <div
+                          key={notif.id}
+                          className="flex gap-3 px-4 py-3 hover:bg-secondary transition-colors border-b border-border last:border-0"
+                        >
+                          {/* Icon */}
+                          <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+                            <BookOpen size={16} className="text-primary" />
+                          </div>
+                          {/* Nội dung */}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate">
+                              {notif.title}
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
+                              {notif.message}
+                            </p>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           {user ? (
             <div className="relative" ref={userRef}>
               <button
@@ -162,7 +244,6 @@ export default function Header() {
                       label="Trang cá nhân"
                       onClick={() => setUserDropOpen(false)}
                     />
-                  
                     {user.role === "admin" && (
                       <DropLink
                         to="/admin"
@@ -264,6 +345,13 @@ export default function Header() {
                 <div className="flex items-center gap-2 px-3 py-2 mb-1">
                   <Avatar user={user} />
                   <span className="text-sm font-medium">{user.username}</span>
+                  {/* Badge thông báo mobile */}
+                  {notifications.length > 0 && (
+                    <span className="ml-auto bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                      {notifications.length > 9 ? "9+" : notifications.length}{" "}
+                      thông báo
+                    </span>
+                  )}
                 </div>
                 <DropLink
                   to="/profile"
@@ -311,7 +399,6 @@ export default function Header() {
   );
 }
 
-
 function SearchBox({ className = "", onNavigate }) {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
@@ -321,7 +408,6 @@ function SearchBox({ className = "", onNavigate }) {
   const wrapperRef = useRef(null);
   const debounceRef = useRef(null);
 
-  // Đóng khi click ngoài
   useEffect(() => {
     const handler = (e) => {
       if (wrapperRef.current && !wrapperRef.current.contains(e.target)) {
@@ -332,7 +418,6 @@ function SearchBox({ className = "", onNavigate }) {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  // Debounce gọi API
   useEffect(() => {
     const q = searchQuery.trim();
     if (!q) {

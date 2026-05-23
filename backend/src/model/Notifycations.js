@@ -1,0 +1,37 @@
+import mongoose from "mongoose";
+
+const notifycationSchema = new mongoose.Schema(
+  {
+    newComic: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "NewComic",
+      required: true,
+    },
+
+    title: {
+      type: String,
+      required: true,
+    },
+
+    message: {
+      type: String,
+      default: "",
+    },
+
+    receivedBy: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
+
+    expiresAt: {
+      type: Date,
+      default: () => new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
+    },
+  },
+  { timestamps: true },
+);
+
+const Notifycation = mongoose.model("Notifycation", notifycationSchema);
+export default Notifycation;

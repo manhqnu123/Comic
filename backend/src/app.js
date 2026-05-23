@@ -1,6 +1,7 @@
 import express from "express";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
+import {createServer} from "http";
 dotenv.config();
 
 import { connectDB } from "./config/db.js";
@@ -18,10 +19,14 @@ import './model/index.js';
 import { initPermissionsCache } from "./config/permissionCache.js";
 import permissionsRouter from "./routers/permissionsRouter.js";
 import roleRouter from "./routers/roleRouter.js";
+import { initSocket } from "./config/socketIO.js";
 
 const __dirname = path.resolve();
 
 const app = express();
+const httpServer = createServer(app);
+initSocket(httpServer);
+
 if (process.env.NODE_ENV == "production") {
   app.use(
     cors({
@@ -52,7 +57,7 @@ if (process.env.NODE_ENV === "production") {
 }
 
 connectDB().then(() => {
-  app.listen(3000, () => {
+  httpServer.listen(3000, () => {
     console.log("ứng dụng đang chạy trên cổng 3000");
   });
 });
