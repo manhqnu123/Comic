@@ -13,6 +13,7 @@
   "dependencies": {
     "http": "^0.0.1-security",
     "jwt-decode": "^4.0.0",
+    "nodemailer": "^9.0.1",
     "socket.io": "^4.8.3"
   }
 }

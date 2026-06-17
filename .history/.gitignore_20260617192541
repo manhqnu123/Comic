@@ -1,0 +1,6 @@
+.env
+node_modules/
+key/
+backend/src/config/seed.js
+backend/src/config/db.js
+backend/src/config/email
