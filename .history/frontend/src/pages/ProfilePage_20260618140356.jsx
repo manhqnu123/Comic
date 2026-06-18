@@ -50,11 +50,7 @@ function ComicListItem({ title, sub, icon , href }) {
       className="flex items-center gap-3 bg-card border border-border hover:border-primary rounded-lg p-3 mb-2 cursor-pointer transition-colors"
     >
       <div className="w-10 h-10 rounded-md bg-secondary flex items-center justify-center text-lg shrink-0">
-        {icon ? (
-          <img src={icon} alt={title} className="w-full h-full object-cover" />
-        ) : (
-          <span className="text-lg">🕐</span>
-        )}
+        
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium truncate">{title}</p>
@@ -177,6 +173,7 @@ export default function ProfilePage() {
                 <ComicListItem
                   key={f._id}
                   title={f.comic?.title}
+                  avatar={h.comic?.coverImg}
                   href={`/truyen/${f.comic?.slug}`}
                 />
               ))
@@ -196,9 +193,7 @@ export default function ProfilePage() {
                 <ComicListItem
                   key={h._id}
                   title={h.comic?.title}
-                  icon={h.comic?.coverImg}
                   sub={`Chapter ${h.chapter?.chapterNumber}`}
-                  href={`/truyen/${h.comic?.slug}`}
                 />
               ))
             )}

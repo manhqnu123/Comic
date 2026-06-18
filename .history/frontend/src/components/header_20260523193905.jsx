@@ -545,6 +545,7 @@ function SearchBox({ className = "", onNavigate }) {
   );
 }
 
+// ── Helpers ───────────────────────────────────────────────
 function Avatar({ user }) {
   if (user.avatar) {
     return (

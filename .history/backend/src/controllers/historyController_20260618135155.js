@@ -51,23 +51,12 @@ export const getHistory = async (req, res) => {
 
     const populatedHistory = await Promise.all(
       historyList.map(async (item) => {
-
         const comicData = await Comic.findById(item.comic).select(
-          "title coverImg slug"
+          "title avatar",
         );
-
-        const chapterData = await Chapter.findById(item.chapter).select(
-          "title chapterNumber",
-        );
-
-        return {
-          ...item,
-          comic: comicData,
-          chapter: chapterData, 
-        };
+        return { ...item, comic: comicData };
       }),
     );
-
     res.json(populatedHistory);
   } catch (err) {
     console.error("Lỗi ở getHistory trên Redis:", err);

@@ -1,6 +1,4 @@
 import redisClient from "../config/redis.js";
-import Comic from "../model/Comic.js";
-import Chapter from "../model/Chapter.js";
 
 export const addReadHistory = async (req, res) => {
   try {
@@ -34,7 +32,7 @@ export const addReadHistory = async (req, res) => {
 
 export const getHistory = async (req, res) => {
   try {
-    const userId = req.user.id; 
+    const userId = req.user.id; //
     const redisKey = `user:history:${userId}`;
 
     const rawHistory = await redisClient.hGetAll(redisKey);
@@ -47,40 +45,30 @@ export const getHistory = async (req, res) => {
       JSON.parse(item),
     );
 
+    // Sắp xếp mảng theo thời gian 'lastReadAt' giảm dần (mới đọc đưa lên đầu)
     historyList.sort((a, b) => new Date(b.lastReadAt) - new Date(a.lastReadAt));
 
-    const populatedHistory = await Promise.all(
-      historyList.map(async (item) => {
+    // LƯU Ý: Vì Redis chỉ lưu chuỗi text cơ bản chứ không tự động .populate() liên kết bảng như MongoDB
+    // Nên nếu Frontend cần full thông tin của 'comic' và 'chapter' (như tên truyện, ảnh đại diện),
+    // bạn sẽ cần bổ sung thêm logic populate thủ công bằng Mongoose ở bước này nếu muốn.
 
-        const comicData = await Comic.findById(item.comic).select(
-          "title coverImg slug"
-        );
-
-        const chapterData = await Chapter.findById(item.chapter).select(
-          "title chapterNumber",
-        );
-
-        return {
-          ...item,
-          comic: comicData,
-          chapter: chapterData, 
-        };
-      }),
-    );
-
-    res.json(populatedHistory);
+    res.json(historyList);
   } catch (err) {
     console.error("Lỗi ở getHistory trên Redis:", err);
     res.status(500).json({ message: "Lỗi hệ thống", error: err.message }); //
   }
 };
 
+// ==========================================
+// 3. XÓA MỘT LỊCH SỬ ĐỌC TRUYỆN CỦA USER
+// ==========================================
 export const deleteHistory = async (req, res) => {
   try {
-    const userId = req.user.id; 
-    const comicId = req.params.comicId; 
+    const userId = req.user.id; //
+    const comicId = req.params.comicId; //
     const redisKey = `user:history:${userId}`;
 
+    // Xóa field cụ thể (comicId) khỏi Redis Hash
     const deletedCount = await redisClient.hDel(redisKey, comicId);
 
     if (deletedCount === 0) {
@@ -92,6 +80,6 @@ export const deleteHistory = async (req, res) => {
     res.json({ message: "Đã xóa lịch sử đọc thành công." });
   } catch (err) {
     console.error("Lỗi ở deleteHistory trên Redis:", err);
-    res.status(500).json({ message: "Lỗi hệ thống", error: err.message }); 
+    res.status(500).json({ message: "Lỗi hệ thống", error: err.message }); //
   }
 };

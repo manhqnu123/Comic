@@ -1,6 +1,5 @@
 import redisClient from "../config/redis.js";
 import Comic from "../model/Comic.js";
-import Chapter from "../model/Chapter.js";
 
 export const addReadHistory = async (req, res) => {
   try {
@@ -34,7 +33,7 @@ export const addReadHistory = async (req, res) => {
 
 export const getHistory = async (req, res) => {
   try {
-    const userId = req.user.id; 
+    const userId = req.user.id; //
     const redisKey = `user:history:${userId}`;
 
     const rawHistory = await redisClient.hGetAll(redisKey);
@@ -51,23 +50,12 @@ export const getHistory = async (req, res) => {
 
     const populatedHistory = await Promise.all(
       historyList.map(async (item) => {
-
         const comicData = await Comic.findById(item.comic).select(
-          "title coverImg slug"
+          "title avatar",
         );
-
-        const chapterData = await Chapter.findById(item.chapter).select(
-          "title chapterNumber",
-        );
-
-        return {
-          ...item,
-          comic: comicData,
-          chapter: chapterData, 
-        };
+        return { ...item, comic: comicData };
       }),
     );
-
     res.json(populatedHistory);
   } catch (err) {
     console.error("Lỗi ở getHistory trên Redis:", err);
@@ -77,7 +65,7 @@ export const getHistory = async (req, res) => {
 
 export const deleteHistory = async (req, res) => {
   try {
-    const userId = req.user.id; 
+    const userId = req.user.id; //
     const comicId = req.params.comicId; 
     const redisKey = `user:history:${userId}`;
 

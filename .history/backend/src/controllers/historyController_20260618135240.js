@@ -51,11 +51,12 @@ export const getHistory = async (req, res) => {
 
     const populatedHistory = await Promise.all(
       historyList.map(async (item) => {
-
+        // Tìm thông tin truyện cần thiết
         const comicData = await Comic.findById(item.comic).select(
-          "title coverImg slug"
+          "title avatar",
         );
 
+        // Tìm thêm thông tin chương (lấy trường title hoặc chapterNumber tùy cấu trúc bảng)
         const chapterData = await Chapter.findById(item.chapter).select(
           "title chapterNumber",
         );
@@ -63,7 +64,7 @@ export const getHistory = async (req, res) => {
         return {
           ...item,
           comic: comicData,
-          chapter: chapterData, 
+          chapter: chapterData, // Gán dữ liệu Object chi tiết thay vì để chuỗi ID thô
         };
       }),
     );
