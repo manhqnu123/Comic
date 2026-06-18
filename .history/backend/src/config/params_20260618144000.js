@@ -1,3 +1,0 @@
-const params = {
-    date
-}
