@@ -1,5 +1,4 @@
 import mongoose from "mongoose";
-import params from "../config/params.js";
 
 const notifycationSchema = new mongoose.Schema(
   {
@@ -28,7 +27,7 @@ const notifycationSchema = new mongoose.Schema(
 
     expiresAt: {
       type: Date,
-      default: () => new Date(Date.now() + params.date),
+      default: () => new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
     },
   },
   { timestamps: true },

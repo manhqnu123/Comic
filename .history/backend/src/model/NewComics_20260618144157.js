@@ -25,7 +25,7 @@ const newProductSchema = new mongoose.Schema(
 
     expiresAt: {
       type: Date,
-      default: () => new Date(Date.now() + params.date),
+      default: () => new Date(Date.now() + params.),
     },
   },
   { timestamps: true },
